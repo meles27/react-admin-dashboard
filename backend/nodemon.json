@@ -1,0 +1,11 @@
+{
+    "watch": [
+        "src",
+        "dev-data"
+    ],
+    "ext": "ts",
+    "ignore": [
+        "node_modules",
+        "dist"
+    ]
+}
