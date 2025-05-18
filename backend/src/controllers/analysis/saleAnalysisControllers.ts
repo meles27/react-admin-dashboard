@@ -2,7 +2,6 @@ import AppDataSource from "@/data-source";
 import { Inventory } from "@/entity/Inventory";
 import { Product } from "@/entity/product/Product";
 import { ProductVariant } from "@/entity/product/ProductVariant";
-import { Purchase } from "@/entity/Purchase";
 import { Sale } from "@/entity/Sale";
 import { PaginatedResponseIface } from "@/types";
 import {
@@ -17,7 +16,6 @@ export default class SaleAnalysisControllers {
   productVariantRepository = AppDataSource.getRepository(ProductVariant);
   productRepository = AppDataSource.getRepository(Product);
   saleRepository = AppDataSource.getRepository(Sale);
-  purchaseRepository = AppDataSource.getRepository(Purchase);
   constructor() {}
 
   saleAnalysis = async (req: Request, res: Response, next: NextFunction) => {
@@ -58,44 +56,17 @@ export default class SaleAnalysisControllers {
                     AND $2
                 GROUP BY
                     sale_item."productVariantId"
-            ),
-            purchase_analysis AS (
-                SELECT
-                    purchase_item."productVariantId",
-                    COALESCE(
-                        SUM(purchase_item.price * purchase_item.quantity) / NULLIF(SUM(purchase_item.quantity), 0),
-                        0
-                    ) as avg_purchase_price
-                FROM
-                    purchase_item
-                WHERE
-                    purchase_item."createdAt" <= $2
-                GROUP BY
-                    purchase_item."productVariantId"
             )
             SELECT
                 COALESCE(SUM(sale_analysis.total_sale_items), 0) as total_sale_items,
                 COALESCE(SUM(sale_analysis.total_sale_price), 0) as total_sale_price,
                 COALESCE(SUM(sale_analysis.total_discount), 0) as total_discount,
-                COALESCE(
-                    SUM(
-                        (
-                            sale_analysis.total_sale_price - return_analysis.total_refund_price
-                        ) - (
-                            (
-                                sale_analysis.total_sale_items - return_analysis.total_refund_items
-                            ) * purchase_analysis.avg_purchase_price
-                        )
-                    ),
-                    0
-                ) as total_profit,
                 COALESCE(SUM(return_analysis.total_refund_items), 0) as total_refund_items,
                 COALESCE(SUM(return_analysis.total_refund_price), 0) as total_refund_price
             FROM
                 sale_analysis
                 FULL OUTER JOIN return_analysis ON sale_analysis."productVariantId" = return_analysis."productVariantId"
-                LEFT JOIN purchase_analysis ON sale_analysis."productVariantId" = purchase_analysis."productVariantId";
-         `,
+        `,
           [query.from, query.to || new Date()]
         );
 
@@ -197,10 +168,9 @@ export default class SaleAnalysisControllers {
       .createQueryBuilder("productVariant")
       .leftJoin("productVariant.saleItems", "saleItems")
       .leftJoin("saleItems.sale", "sale")
-      .leftJoin("saleItems.saleItemReturns", "saleItemReturns")
       .select("productVariant")
       .addSelect(
-        "COALESCE(SUM(saleItems.price * saleItems.quantity),0)",
+        "COALESCE(SUM(saleItems.price * saleItems.quantity - saleItems.discount),0)",
         "revenue"
       )
       .addSelect("COALESCE(SUM(saleItems.quantity), 0)", "total_items")

@@ -8,6 +8,8 @@ export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: axiosBaseQuery({ baseUrl: config.baseUrl }),
   tagTypes: ["user", "users"],
+  refetchOnMountOrArgChange: true,
+  keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     listUsers: builder.query({
       query: (arg) => ({

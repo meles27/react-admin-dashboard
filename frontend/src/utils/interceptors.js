@@ -15,7 +15,8 @@ axiosInstance.interceptors.request.use(
       }`,
       config.params
     );
-    if (config.url !== "/auth/token/") {
+    console.log(config.url);
+    if (config.url !== "/api/v1/auth/token") {
       const token = localStorage.getItem(settings.JWT_KEY_NAME); // Change as needed
       if (token) {
         const tokenObject = JSON.parse(token);

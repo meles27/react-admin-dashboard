@@ -2,20 +2,11 @@ import AppDataSource from "@/data-source";
 import { User, USER_ROLE } from "@/entity/User";
 import { throwErrorIfNotFound } from "@/exceptions";
 import { ForbiddenError } from "@/exceptions/errorClasses";
-import { Settings } from "@/settings";
-import { io } from "@/socket";
-import { emitCreateCategoryEvent } from "@/socket/categoryEvent";
-import {
-  emitChangeUserRoleEvent,
-  emitChangeUserStatusEvent,
-  emitDeleteUserEvent,
-  emitUpdateUserEvent,
-} from "@/socket/userEvent";
 import { PaginatedResponseIface } from "@/types";
-import { createCategorySchema } from "@/validationSchema/bodySchema/categorySchema";
+import { removeFile, saveFileRelativePath } from "@/utils/file";
+import { Password } from "@/utils/password";
 import {
-  userChangeRoleSchema,
-  userChangeStatusSchema,
+  userCreateSchema,
   userUpdateSchema,
 } from "@/validationSchema/bodySchema/userSchema";
 import { BaseQuerySchema } from "@/validationSchema/querySchema/baseQuerySchema";
@@ -78,47 +69,35 @@ export class UserControllers extends BaseControllers<User> {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
-    const [validatedData, imageUpload] = await Promise.all([
-      createCategorySchema.validateAsync(req.body),
-      req.file?.buffer &&
-        req.cloudinary.uploadImage(
-          {
-            buffer: req.file.buffer,
-            originalname: req.file.originalname,
-          },
-          {
-            folder: Settings.CLOUDINARY_CONFIG.CLOUDINARY_USER_FOLDER,
-          }
-        ),
-    ]);
-
-    // Prepare category data with conditional image properties
-    const categoryData = {
-      ...validatedData,
-      ...(imageUpload && {
-        image: imageUpload.secure_url,
-        image_public_id: imageUpload.public_id,
-      }),
-    };
-
-    // Use direct insert for better performance
-    const { identifiers } = await this.repository.insert(categoryData);
-    const categoryId = identifiers[0].id;
-
-    // Fire-and-forget event emission
-    setImmediate(() => {
-      emitCreateCategoryEvent(io, [
-        {
-          id: categoryId,
-          name: validatedData.name,
-        },
-      ]);
-    });
-
-    // Minimal response
+  ): Promise<void> => {
+    const validatedData = await userCreateSchema.validateAsync(req.body);
+    /**create user instance */
+    const user = new User();
+    /** assign data */
+    Object.assign(user, validatedData);
+    /** hash the password */
+    user.password = await Password.hashPassword(user.password);
+    /**
+     * save profile image
+     */
+    if (req.files.length && req.files instanceof Array) {
+      user.image = saveFileRelativePath(req.files[0].filename);
+    }
+    /**
+     * save one file
+     */
+    if (req.file) {
+      user.image = saveFileRelativePath(req.file.filename);
+    }
+    /** save */
+    const savedUser = await this.repository.save(user);
+    /** remove the password or else it will be exposed */
+    savedUser.password = undefined;
+    /**
+     * return savedUser
+     */
     res.status(201).json({
-      id: categoryId,
+      id: savedUser.id,
     });
   };
 
@@ -131,52 +110,45 @@ export class UserControllers extends BaseControllers<User> {
     res.status(200).json(user);
   };
 
-  update: RequestHandler = async (req, res, next): Promise<void> => {
-    try {
-      const { role, ...validatedData } = await userUpdateSchema.validateAsync(
-        req.body
-      );
-      const user = await this.getObject(req);
-      const currentUser = req.user;
-      const isAdmin = currentUser.role === USER_ROLE.ADMIN;
-      const isSelf = currentUser.id === user.id;
+  update: RequestHandler = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    const { role, ...validatedData } = await userUpdateSchema.validateAsync(
+      req.body
+    );
+    const user = await this.getObject(req);
 
-      if (!isAdmin && !isSelf) {
+    if (req.user?.role != USER_ROLE.ADMIN) {
+      if (req.user?.id != user.id) {
         res.status(403).json({
           detail: "You do not have permission to perform this action.",
         });
         throw new ForbiddenError();
       }
-
-      // Apply validated data
-      Object.assign(user, validatedData);
-
-      // Allow role change only if admin
-      if (isAdmin && role) {
-        user.role = role;
-      }
-      // Upload new profile image if provided
-      if (req.file) {
-        const { secure_url, public_id } = await req.cloudinary.updateImage(
-          user.image_public_id,
-          req.file,
-          {
-            folder: Settings.CLOUDINARY_CONFIG.CLOUDINARY_USER_FOLDER,
-          }
-        );
-        user.image = secure_url;
-        user.image_public_id = public_id;
-      }
-
-      const updatedUser = await this.repository.save(user);
-
-      // Emit socket event
-      emitUpdateUserEvent(io, [updatedUser]);
-      // Send response
-      res.status(200).json(updatedUser);
-    } catch (error) {
-      next(error);
     }
+
+    Object.assign(user, validatedData);
+
+    if (req.user.role == USER_ROLE.ADMIN) {
+      user.role = role;
+    }
+    /**
+     * save profile image
+     */
+    if (req.files.length && req.files instanceof Array) {
+      /**
+       * remove the old image
+       */
+      removeFile(user.image);
+      user.image = saveFileRelativePath(req.files[0].filename);
+    }
+    const response = await this.repository.save(user);
+    /**
+     * http response
+     */
+    res.status(200).json(response);
   };
 
   softDestroy: RequestHandler = async (
@@ -192,18 +164,15 @@ export class UserControllers extends BaseControllers<User> {
             id: req.params[this.objectId],
           },
         });
+        user.active = false;
+        /**
+         * first make inactive
+         */
+        await userRepository.save(user);
         /**
          * soft delete
          */
         await userRepository.softRemove(user);
-        /**
-         * socket remove user notification
-         */
-        emitDeleteUserEvent(io, [
-          {
-            id: req.params[this.objectId],
-          },
-        ]);
         /**
          * http response
          */
@@ -211,68 +180,6 @@ export class UserControllers extends BaseControllers<User> {
       } catch (error) {
         next(error);
       }
-    });
-  };
-
-  changeStatus: RequestHandler = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    const validatedData = await userChangeStatusSchema.validateAsync(req.body);
-
-    await this.repository.update(
-      { id: req.params[this.objectId], active: !validatedData.active },
-      {
-        active: validatedData.active,
-      }
-    );
-    /**
-     * socket change status user notification
-     */
-    emitChangeUserStatusEvent(io, [
-      {
-        id: req.params[this.objectId],
-        active: validatedData.active,
-      },
-    ]);
-    /**
-     * http response
-     */
-    res.status(200).json({
-      id: req.params[this.objectId],
-      detail: validatedData.active
-        ? "User has been activated"
-        : "User has been de-activated",
-    });
-  };
-
-  changeRole: RequestHandler = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    const validatedData = await userChangeRoleSchema.validateAsync(req.body);
-
-    await this.repository.update(
-      { id: req.params[this.objectId] },
-      { role: validatedData.role }
-    );
-    /**
-     * socket change user role notification
-     */
-    emitChangeUserRoleEvent(io, [
-      {
-        id: req.params[this.objectId],
-        role: validatedData.role,
-      },
-    ]);
-    /**
-     * http response
-     */
-    res.status(200).json({
-      id: req.params[this.objectId],
-      detail: "User role has been updated",
     });
   };
 }

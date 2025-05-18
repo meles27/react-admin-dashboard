@@ -2,24 +2,24 @@ import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { analysisApi } from "../services/analysisApi";
 import { authApi } from "../services/authApi";
-import { productApi } from "../services/productApi";
-import { saleOrderApi } from "../services/saleOrderApi";
+import { productVariantApi } from "../services/productVariantApi";
+import { saleApi } from "../services/saleApi";
 import { userApi } from "../services/userApi";
 
 export const store = configureStore({
   reducer: {
     [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
-    [productApi.reducerPath]: productApi.reducer,
-    [saleOrderApi.reducerPath]: saleOrderApi.reducer,
+    [productVariantApi.reducerPath]: productVariantApi.reducer,
+    [saleApi.reducerPath]: saleApi.reducer,
     [analysisApi.reducerPath]: analysisApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       authApi.middleware,
       userApi.middleware,
-      productApi.middleware,
-      saleOrderApi.middleware,
+      productVariantApi.middleware,
+      saleApi.middleware,
       analysisApi.middleware
     ),
 });

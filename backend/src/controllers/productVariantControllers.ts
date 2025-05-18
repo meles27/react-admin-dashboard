@@ -27,7 +27,9 @@ export class ProductVariantControllers extends BaseControllers<ProductVariant> {
       },
       relations: {
         inventory: true,
-        images: true,
+        product: {
+          category: true,
+        },
       },
       skip: queryParams.offset,
       take: queryParams.limit,

@@ -25,9 +25,6 @@ export class Product {
   @Column({ nullable: true })
   hero: string;
 
-  @Column({ nullable: true })
-  hero_public_id: string;
-
   @Column("jsonb", { default: {} })
   attributes: Record<string, number | boolean | string | object | Array<any>>;
 

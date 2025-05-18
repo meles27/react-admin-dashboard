@@ -1,5 +1,4 @@
 import AppDataSource from "@/data-source";
-import { Settings } from "@/settings";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 
 // .addSelect("COALESCE(MAX(purchaseItems.price), 0)", "max_purchase_price");
@@ -11,7 +10,7 @@ export default class GeneralAnalysisControllers {
     next: NextFunction
   ) => {
     const generalMetrices = await AppDataSource.query(`
-        WITH first_analysis AS (
+        WITH inventory_analysis AS (
             SELECT
                 COALESCE(
                     SUM(
@@ -24,7 +23,7 @@ export default class GeneralAnalysisControllers {
                 inventory
                 LEFT JOIN product_variant ON inventory."productVariantId" = product_variant.id
         ),
-        second_analysis as (
+        out_analysis as (
             SELECT
                 COUNT(*) as out_of_stock
             FROM
@@ -32,7 +31,7 @@ export default class GeneralAnalysisControllers {
             WHERE
                 (inventory.available + inventory.reserved) = 0
         ),
-        third_analysis as (
+        low_analysis as (
             SELECT
                 COUNT(*) as low_stock
             FROM
@@ -40,91 +39,62 @@ export default class GeneralAnalysisControllers {
             WHERE
                 (inventory.available + inventory.reserved) < inventory.minimum
         ),
-        today_sale AS (
+        sale_analysis AS (
             SELECT
                 COALESCE(
                     SUM(
                         sale_item.price * sale_item.quantity - sale_item.discount
                     ),
                     0
-                ) as today_sale
-            FROM
-                sale_item
-            WHERE
-                sale_item."createdAt" >= (
-                    date_trunc('day', now() AT TIME ZONE '${Settings.TIMEZONE}') AT TIME ZONE '${Settings.TIMEZONE}'
-                )
-                AND sale_item."createdAt" < (
-                    (
-                        date_trunc('day', now() AT TIME ZONE '${Settings.TIMEZONE}') + INTERVAL '1 day'
-                    ) AT TIME ZONE '${Settings.TIMEZONE}'
-                )
-        ),
-        today_purchase AS (
-            SELECT
+                ) as total_sale_price,
                 COALESCE(
                     SUM(
-                        purchase_item.price * purchase_item.quantity
+                        sale_item.quantity
                     ),
                     0
-                ) as today_purchase
+                ) as total_sale_items
             FROM
-                purchase_item
-            WHERE
-                purchase_item."createdAt" >= (
-                    date_trunc('day', now() AT TIME ZONE '${Settings.TIMEZONE}') AT TIME ZONE '${Settings.TIMEZONE}'
-                )
-                AND purchase_item."createdAt" < (
-                    (
-                        date_trunc('day', now() AT TIME ZONE '${Settings.TIMEZONE}') + INTERVAL '1 day'
-                    ) AT TIME ZONE '${Settings.TIMEZONE}'
-                )
+                sale_item
+        ),
+        user_analysis AS (
+            SELECT
+                count(*) as total_users
+            FROM
+                "user"
         )
         SELECT
             *
         FROM
-            first_analysis,
-            second_analysis,
-            third_analysis,
-            today_sale,
-            today_purchase
+            inventory_analysis,
+            out_analysis,
+            low_analysis,
+            sale_analysis,
+            user_analysis
         `);
-    res.status(200).json(generalMetrices[0]);
+    const response = {
+      ...generalMetrices[0],
+      sale_trend: await this.getMonthWiseAnalysis(req),
+    };
+    console.log("response", response);
+    res.status(200).json(response);
   };
 
-  getWeekWiseAnalysis = async (req: Request) => {
-    return (
-      await AppDataSource.query<any[]>(`
+  getMonthWiseAnalysis = async (req: Request) => {
+    return await AppDataSource.query<any[]>(`
       WITH sales AS (
           SELECT
-              date_trunc('week', "createdAt") AS week,
+              date_trunc('month', "createdAt") AS month,
               SUM(sale_item.quantity * sale_item.price) AS revenue
           FROM
               "sale_item"
           GROUP BY
-              week
-      ),
-      purchases AS (
-          SELECT
-              date_trunc('week', "createdAt") AS week,
-              SUM(quantity) AS expense
-          FROM
-              "purchase_item"
-          GROUP BY
-              week
+              month
       )
       SELECT
-          COALESCE(s.week, p.week) AS week,
-          COALESCE(s.revenue, 0) AS revenue,
-          COALESCE(p.expense, 0) AS expense
+          s.month AS month,
+          COALESCE(s.revenue, 0) AS revenue
       FROM
-          sales s FULL
-          OUTER JOIN purchases p ON s.week = p.week;
-  `)
-    ).map((info) => ({
-      ...info,
-      revenue: info.revenue,
-      expense: info.expense,
-    }));
+          sales s
+  `);
   };
 }

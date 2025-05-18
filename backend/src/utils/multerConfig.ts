@@ -1,21 +1,19 @@
 import { Settings } from "@/settings";
-import multer, { memoryStorage } from "multer";
+import multer from "multer";
 import path from "path";
 
 // Set up storage engine
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, Settings.STATICFILE_DIR); // Set uploads directory
-//   },
-//   filename: (req, file, cb) => {
-//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-//     const parsed = path.parse(file.originalname);
-//     const fullPath = parsed.name + "-" + uniqueSuffix + parsed.ext;
-//     cb(null, fullPath);
-//   },
-// });
-
-const storage = memoryStorage();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, Settings.STATICFILE_DIR); // Set uploads directory
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const parsed = path.parse(file.originalname);
+    const fullPath = parsed.name + "-" + uniqueSuffix + parsed.ext;
+    cb(null, fullPath);
+  },
+});
 
 // Set file filter
 const fileFilter = (

@@ -1,7 +1,7 @@
-import formatJoiErrors from "@/utils/formatJoiErrors";
+import { printMultipleObjects } from "@/utils";
+import { removeFile } from "@/utils/file";
 import { NextFunction, Request, Response } from "express";
 import Joi from "joi";
-import { JsonWebTokenError } from "jsonwebtoken";
 import logger from "node-color-log";
 import { FindOneOptions, QueryFailedError, Repository } from "typeorm";
 import {
@@ -17,6 +17,7 @@ import {
   ServiceUnavailableError,
   UnauthorizedError,
 } from "./errorClasses";
+import formatJoiErrors from "@/utils/formatJoiErrors";
 
 enum DATABASE_ERROR_CODES {
   ERROR_DUPLICATION_VIOLATION = "23505",
@@ -85,20 +86,16 @@ export function errorHandler(
   /**
    * remove files if there
    */
-  // Fire all deletions in parallel, but don't wait for completion
-  const deletePromises = req.cloudinary
-    .getUploadedResults()
-    .map((file) => req.cloudinary.deleteImage(file.public_id));
-
-  // Optionally handle results later
-  deletePromises.forEach((promise) =>
-    promise
-      .then(() => {
-        console.log("Delete successful");
-      })
-      .catch((err) => console.error("Delete failed:", err))
-  );
-
+  if (req.file) {
+    const response = removeFile(req.file.filename);
+    printMultipleObjects("error is occured and file is removed", response);
+  }
+  if (req.files && req.files instanceof Array) {
+    req.files.forEach((file) => {
+      const response = removeFile(file.filename);
+      printMultipleObjects("error is occured and file is removed", response);
+    });
+  }
   // 400 - Bad Request from joi validation
   if (err instanceof Joi.ValidationError) {
     logger.color("yellow").log(err);
@@ -200,11 +197,6 @@ export function errorHandler(
     } else {
       res.status(500).json({ error: err.driverError.message });
     }
-  } else if (err instanceof JsonWebTokenError) {
-    res.status(401).json({
-      statusCode: 401,
-      detail: err.message,
-    });
   } else {
     res.status(500).json({
       error: "unhandled error",

@@ -1,19 +1,12 @@
 import { Settings } from "@/settings";
-import { generateCertificates } from "@/utils/generate_cert";
 import express from "express";
 import fs from "fs";
 import { createServer } from "https";
 import { Server } from "socket.io";
-/**
- * Generates SSL certificates using mkcert
- */
-const certificate = generateCertificates(Settings.SSL_CONFIG);
-/**
- * Creates an HTTPS server
- */
+
 const serverOptions = {
-  key: fs.readFileSync(certificate.keyPath),
-  cert: fs.readFileSync(certificate.certPath),
+  key: fs.readFileSync(Settings.SSL_CONFIG.keyFile),
+  cert: fs.readFileSync(Settings.SSL_CONFIG.certFile),
 };
 
 console.log(serverOptions);

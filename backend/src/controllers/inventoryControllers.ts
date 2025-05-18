@@ -7,7 +7,6 @@ import {
 } from "@/validationSchema/querySchema/inventoryQuerySchema";
 import { NextFunction, Request, Response } from "express";
 import { BaseControllers } from "./baseControllers";
-import logger from "node-color-log";
 
 export class InventoryControllers extends BaseControllers<Inventory> {
   constructor() {
@@ -22,10 +21,10 @@ export class InventoryControllers extends BaseControllers<Inventory> {
       .createQueryBuilder("inventory")
       .withDeleted()
       .leftJoin("inventory.productVariant", "productVariant")
-      .leftJoin("productVariant.images", "images")
       .select("inventory")
       .addSelect("productVariant")
       .where("productVariant.deletedAt IS NULL");
+
     if (queryParams.search) {
       queryBuilder.andWhere("productVariant.name ILIKE :search", {
         search: `%${queryParams.search}%`,
@@ -57,15 +56,7 @@ export class InventoryControllers extends BaseControllers<Inventory> {
       count: total,
       next: null,
       previous: null,
-      results: inventories.map((inventory) => ({
-        ...inventory,
-        productVariant: {
-          ...inventory.productVariant,
-          images: inventory.productVariant.images
-            ? inventory.productVariant.images
-            : [],
-        },
-      })),
+      results: inventories,
     };
     res.status(200).json(response);
   };

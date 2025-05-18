@@ -1,26 +1,25 @@
 // setup the environment variable
 import PgSession from "connect-pg-simple";
 import cors from "cors";
-// import "dotenv/config";
-// import { logger as httpLogger } from "@tinyhttp/logger";
+import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import "express-async-errors";
 import session from "express-session";
 import logger from "node-color-log";
-
-import morgan from "morgan";
+import nodemailer from "nodemailer";
 import { Pool } from "pg";
 import { AppDataSource } from "./data-source";
 import { errorHandler, logErrors } from "./exceptions";
 import { jwtAuthentication } from "./middleware/authentications";
-import { injectCloudinary } from "./middleware/cloudinaryMiddleware";
 import router from "./routes";
 import { Settings } from "./settings";
 import { app, httpsServer } from "./socket";
+import upload from "./utils/multerConfig";
 
 AppDataSource.initialize()
   .then(async () => {
     console.log("successfully connected to database");
+
     app.use(
       cors({
         origin: Settings.CROSS_ORIGIN_URLS,
@@ -28,6 +27,16 @@ AppDataSource.initialize()
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       })
     );
+    /**
+     * create email
+     */
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
     /**
      * connect the session
      */
@@ -38,13 +47,7 @@ AppDataSource.initialize()
       password: Settings.DATABASE.PASSWORD,
       port: Settings.DATABASE.PORT,
     });
-    /**
-     * http logger
-     */
-    app.use(morgan("common"));
-    /**
-     * session database
-     */
+
     app.use(
       session({
         store: new (PgSession(session))({
@@ -61,14 +64,25 @@ AppDataSource.initialize()
         },
       })
     );
+
     /**
-     * Make cloudinaryService image controllers available on all requests
+     * parse multipart/form-data
      */
-    app.use(injectCloudinary);
+    app.use((req, res, next) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+        upload.any()(req, res, next); // Adjust based on your file field name
+      } else {
+        next(); // Skip Multer for other methods
+      }
+    });
     /**
      * connect the json parser
      */
     app.use(express.json());
+    /**
+     * parse form-data encoded
+     */
+    // app.use(upload.any());
     /**
      * urlencoded parser
      */
@@ -81,8 +95,14 @@ AppDataSource.initialize()
      * connect the logger
      **/
     app.use((req: Request, res: Response, next: NextFunction) => {
-      console.log("req.files", req.files, req.file);
+      logger
+        .color("yellow")
+        .log("|||||||||||||||||||||||||||||||||||||||||||||||||||");
       logger.color("yellow").log("the current request is ", req.url);
+      logger.color("blue").log("the current request user role is ", req.user);
+      logger
+        .color("yellow")
+        .log("|||||||||||||||||||||||||||||||||||||||||||||||||||");
       next();
     });
     /**
@@ -103,6 +123,7 @@ AppDataSource.initialize()
         path: req.originalUrl,
       });
     });
+
     /**
      * handle error
      */
@@ -111,36 +132,10 @@ AppDataSource.initialize()
     /**
      * start server
      */
-    httpsServer.listen(
-      {
-        port: Settings.PORT,
-        host: Settings.HOST,
-        exlusive: false,
-      },
-      () => {
-        console.log(
-          `server is running on port 3000, visit on http://${Settings.HOST}:3000`
-        );
-      }
-    );
-    /**
-     * Shutdown the server
-     */
-    process.on("SIGINT", function () {
-      // sigint signal received, log a message to the console
-      console.log("Shutdown signal intercepted");
-      // close the http server
-      httpsServer.close();
-      // exit the process
-      process.exit();
-    });
-    process.on("SIGTERM", function () {
-      // sigint signal received, log a message to the console
-      console.log("Shutdown signal intercepted");
-      // close the http httpsServer
-      httpsServer.close();
-      // exit the process
-      process.exit();
+    httpsServer.listen(Settings.PORT, Settings.HOST, () => {
+      console.log(
+        `server is running on port 3000, visit on http://${Settings.HOST}:3000`
+      );
     });
   })
   .catch((error) => console.log(error));

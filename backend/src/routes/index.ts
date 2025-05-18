@@ -1,31 +1,18 @@
 import { Router } from "express";
 import analysisRouter from "./analysisRoute";
 import authRouter from "./authRoute";
-import categoryRouter from "./categoryRoute";
 import inventoryRouter from "./inventoryRoute";
-import purchaseOrderRouter from "./order/purchaseOrderRoute";
-import saleOrderRouter from "./order/saleOrderRoute";
 import productRouter from "./productRoute";
 import productVariantRouter from "./productVariantRoute";
-import purchaseRouter from "./purchaseRoute";
-import saleItemReturnRouter from "./saleItemReturnRoute";
 import saleRouter from "./saleRoute";
-import supplierRouter from "./supplierRoute";
 import userRouter from "./userRoute";
 
 const router = Router();
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
-router.use("/categories", categoryRouter);
 router.use("/products", productRouter);
-router.use("/suppliers", supplierRouter);
 router.use("/product-variants", productVariantRouter);
 router.use("/inventories", inventoryRouter);
-router.use("/sale-orders", saleOrderRouter);
-router.use("/purchase-orders", purchaseOrderRouter);
 router.use("/sales", saleRouter);
-router.use("/sale-returns", saleItemReturnRouter);
-router.use("/purchases", purchaseRouter);
 router.use("/analysis", analysisRouter);
-
 export default router;

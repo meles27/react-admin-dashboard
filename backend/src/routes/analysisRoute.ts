@@ -1,5 +1,4 @@
 import GeneralAnalysisControllers from "@/controllers/analysis/generalAnalysisControllers";
-import OrderAnalysisControllers from "@/controllers/analysis/orderAnalysisControllers";
 import SaleAnalysisControllers from "@/controllers/analysis/saleAnalysisControllers";
 import { USER_ROLE } from "@/entity/User";
 import { isAllowedTo } from "@/middleware/permissions";
@@ -12,7 +11,6 @@ import {
 import { Router } from "express";
 
 const generalAnalysisControllers = new GeneralAnalysisControllers();
-const orderAnalysisControllers = new OrderAnalysisControllers();
 const saleAnalysisControllers = new SaleAnalysisControllers();
 
 const allowedRoles: USER_ROLE[] = [USER_ROLE.ADMIN];
@@ -23,7 +21,6 @@ analysisRouter.use(isAllowedTo(allowedRoles));
 analysisRouter
   .route("/general")
   .get(generalAnalysisControllers.generalAnalysis);
-analysisRouter.route("/orders").get(orderAnalysisControllers.orderAnalysis);
 
 // sale analysis
 analysisRouter

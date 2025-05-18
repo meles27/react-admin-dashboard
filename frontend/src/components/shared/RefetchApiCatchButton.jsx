@@ -2,14 +2,14 @@ import { Tooltip, Typography } from "@material-tailwind/react";
 import { motion, useMotionValue } from "framer-motion";
 import { BiRefresh } from "react-icons/bi";
 
-const RefetchApiCatchButton = (props) => {
+const RefetchApiCatchButton = ({ wait, callback }) => {
   const y = useMotionValue(0);
   const handleCallback = async () => {
-    if (!props.wait) {
-      if (props.callback instanceof Promise) {
-        await props.callback();
+    if (!wait) {
+      if (callback instanceof Promise) {
+        await callback();
       } else {
-        props.callback();
+        callback();
       }
     }
   };

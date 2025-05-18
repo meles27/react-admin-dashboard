@@ -1,74 +1,100 @@
 import { motion } from "framer-motion";
-import { BarChart2, ShoppingBag, Users, Zap } from "lucide-react";
-import { useEffect } from "react";
+import { AlertTriangle, ShoppingBag, Users, Zap } from "lucide-react";
 import Header from "../components/common/Header";
 import StatCard from "../components/common/StatCard";
-import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
-import SalesChannelChart from "../components/overview/SalesChannelChart";
 import SalesOverviewChart from "../components/overview/SalesOverviewChart";
-import { useListUsersQuery } from "../services/userApi";
+import config from "../config";
+import { useGeneralAnalysisQuery } from "../services/analysisApi";
+import { formatNumber, formatPrice } from "../utils";
+import ApiError from "./../components/shared/ApiError";
+import Spinner2 from "./../components/shared/Spinner2";
+import Spinner from "./../components/shared/spinner/Spinner";
 
 const OverviewPage = () => {
-  const usersResponse = useListUsersQuery();
-  useEffect(() => {
-    if (usersResponse.isSuccess) {
-      console.log(usersResponse.data);
-    }
-
-    if (usersResponse.isError) {
-      console.log(usersResponse.error);
-    }
-  }, [
-    usersResponse.isSuccess,
-    usersResponse.data,
-    usersResponse.error,
-    usersResponse.isError,
-  ]);
-
+  const generalAnalysisResponse = useGeneralAnalysisQuery();
   return (
     <div className="flex-1 overflow-auto relative z-10">
       <Header title="Overview" />
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
-        {/* STATS */}
-        <motion.div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <StatCard
-            name="Total Sales"
-            icon={Zap}
-            value="$12,345"
-            color="#6366F1"
+        {generalAnalysisResponse.isFetching && (
+          <Spinner2
+            open={
+              generalAnalysisResponse.isFetching &&
+              !generalAnalysisResponse.isLoading
+            }
           />
-          <StatCard
-            name="New Users"
-            icon={Users}
-            value="1,234"
-            color="#8B5CF6"
+        )}
+        {generalAnalysisResponse.isLoading && <Spinner center />}
+        {generalAnalysisResponse.isError && (
+          <ApiError
+            error={generalAnalysisResponse.error}
+            refresh={generalAnalysisResponse.refetch}
           />
-          <StatCard
-            name="Total Products"
-            icon={ShoppingBag}
-            value="567"
-            color="#EC4899"
-          />
-          <StatCard
-            name="Conversion Rate"
-            icon={BarChart2}
-            value="12.5%"
-            color="#10B981"
-          />
-        </motion.div>
+        )}
+        {generalAnalysisResponse.isSuccess && (
+          <>
+            {/* STATS */}
+            <motion.div
+              className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1 }}
+            >
+              <StatCard
+                name="Inventory Value"
+                icon={ShoppingBag}
+                value={formatPrice(
+                  generalAnalysisResponse.data.total_price,
+                  config.CURRENCY,
+                  true
+                )}
+                color="#EC4899"
+              />
+              <StatCard
+                name="Total Products"
+                icon={Zap}
+                value={formatNumber(
+                  generalAnalysisResponse.data.total_items,
+                  false
+                )}
+                color="#6366F1"
+              />
+              <StatCard
+                name="Total Users"
+                icon={Users}
+                value={formatNumber(
+                  generalAnalysisResponse.data.total_users || 0,
+                  true
+                )}
+                color="#8B5CF6"
+              />
+              <StatCard
+                name="Revenue"
+                icon={ShoppingBag}
+                value={formatNumber(
+                  generalAnalysisResponse.data.total_items,
+                  true
+                )}
+                color="#EC4899"
+              />
+              <StatCard
+                name="Low Stock"
+                icon={AlertTriangle}
+                value={23}
+                color="#F59E0B"
+              />
+            </motion.div>
 
-        {/* CHARTS */}
+            {/* CHARTS */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <SalesOverviewChart />
-          <CategoryDistributionChart />
-          <SalesChannelChart />
-        </div>
+            <div className="">
+              {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"> */}
+              <SalesOverviewChart
+                sale_trend={generalAnalysisResponse.data.sale_trend}
+              />
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

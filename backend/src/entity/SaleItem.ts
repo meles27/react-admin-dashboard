@@ -3,13 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { ProductVariant } from "./product/ProductVariant";
 import { Sale } from "./Sale";
-import { SaleItemReturn } from "./SaleItemReturn";
 
 @Entity()
 export class SaleItem {
@@ -60,7 +58,4 @@ export class SaleItem {
     { onDelete: "CASCADE", onUpdate: "CASCADE", nullable: false }
   )
   productVariant: ProductVariant;
-
-  @OneToMany(() => SaleItemReturn, (returnItem) => returnItem.saleItem)
-  saleItemReturns: SaleItemReturn[];
 }

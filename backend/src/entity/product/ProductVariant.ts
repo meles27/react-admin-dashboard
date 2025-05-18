@@ -11,12 +11,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Inventory } from "../Inventory";
-import { PurchaseOrderItem } from "../order/PurchaseOrderItem";
 import { SaleOrderItem } from "../order/SaleOrderItem";
-import { PurchaseItem } from "../PurchaseItem";
 import { SaleItem } from "../SaleItem";
 import { Product } from "./Product";
-import { VariantImage } from "./VariantImage";
 
 // Define an enumeration for inventory measurement units
 export enum InventoryUnit {
@@ -30,12 +27,6 @@ export enum InventoryUnit {
   GALLONS = "gallons",
   SETS = "sets",
   SQUARE_METERS = "m²",
-}
-
-interface ProductImage {
-  // interface VariantImage {
-  url: string;
-  public_id: string;
 }
 
 @Entity()
@@ -66,11 +57,8 @@ export class ProductVariant {
   @Column("jsonb", { default: {} })
   attributes: Record<string, number | boolean | string | object | Array<any>>;
 
-  @Column({ nullable: true })
-  icon: string;
-
-  @Column({ nullable: true })
-  icon_public_id: string;
+  @Column("varchar", { array: true, default: [] })
+  images: string[];
 
   @CreateDateColumn({
     type: "timestamptz",
@@ -103,20 +91,8 @@ export class ProductVariant {
   @OneToMany(() => SaleItem, (saleItem) => saleItem.productVariant)
   saleItems: SaleItem[];
 
-  @OneToMany(() => PurchaseItem, (purchaseItem) => purchaseItem.productVariant)
-  purchaseItems: PurchaseItem[];
-
   @OneToMany(() => SaleOrderItem, (orderProduct) => orderProduct.productVariant)
   saleOrderItems: SaleOrderItem[];
-
-  @OneToMany(
-    () => PurchaseOrderItem,
-    (orderProduct) => orderProduct.productVariant
-  )
-  purchaseOrderItems: PurchaseOrderItem[];
-
-  @OneToMany(() => VariantImage, (image) => image.productVariant)
-  images: VariantImage[];
 
   @OneToOne(() => Inventory, (inventory) => inventory.productVariant)
   inventory: Inventory;

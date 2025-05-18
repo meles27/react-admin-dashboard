@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "*.md": "markdown"
+  },
+  "markdown-live.automaticallyShowPreviewOfMarkdown": true,
+  "rest-client.environmentVariables": {
+    "local": {
+      "url": "http://localhost:3000/api/v1/"
+    },
+    "$shared": {}
+  }
+}

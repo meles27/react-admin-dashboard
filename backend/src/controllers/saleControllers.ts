@@ -1,7 +1,6 @@
 import { AppDataSource } from "@/data-source";
 import { Sale } from "@/entity/Sale";
 import { SaleItem } from "@/entity/SaleItem";
-import { SALE_RETURN_STATUS } from "@/entity/SaleItemReturn";
 import { User, USER_ROLE } from "@/entity/User";
 import { PaginatedResponseIface } from "@/types";
 import { BaseQuerySchema } from "@/validationSchema/querySchema/baseQuerySchema";
@@ -47,12 +46,6 @@ export class SaleControllers extends BaseControllers<Sale> {
       .createQueryBuilder("sale")
       .withDeleted()
       .leftJoin("sale.saleItems", "saleItems")
-      .leftJoin(
-        "saleItems.saleItemReturns",
-        "saleItemReturns",
-        "saleItemReturns.status = :status",
-        { status: SALE_RETURN_STATUS.APPROVED }
-      )
       .select("sale.id", "id")
       .addSelect("COALESCE(SUM(saleItems.quantity), 0)", "total_items")
       .addSelect(
@@ -63,10 +56,6 @@ export class SaleControllers extends BaseControllers<Sale> {
       .addSelect(
         "COALESCE(SUM(saleItemReturns.quantity),0)",
         "total_return_items"
-      )
-      .addSelect(
-        "COALESCE(SUM(saleItemReturns.refund),0)",
-        "total_return_price"
       )
       .where("sale.id = :saleId", { saleId: id })
       .groupBy("sale.id")
@@ -85,12 +74,6 @@ export class SaleControllers extends BaseControllers<Sale> {
       .leftJoin("sale.saleAgent", "saleAgent")
       .leftJoin("sale.customer", "customer")
       .leftJoin("sale.saleItems", "saleItems")
-      .leftJoin(
-        "saleItems.saleItemReturns",
-        "saleItemReturns",
-        "saleItemReturns.status = :status",
-        { status: SALE_RETURN_STATUS.APPROVED }
-      )
       .select("sale")
       .addSelect("customer")
       .addSelect("saleAgent")
@@ -188,10 +171,7 @@ export class SaleControllers extends BaseControllers<Sale> {
       },
       withDeleted: true,
       relations: {
-        productVariant: {
-          images: true,
-        },
-        saleItemReturns: true,
+        productVariant: true,
       },
       skip: queryParams.offset,
       take: queryParams.limit,

@@ -7,11 +7,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { PurchaseOrder } from "./order/PurchaseOrder";
-import { SaleOrder } from "./order/SaleOrder";
-import { Purchase } from "./Purchase";
 import { Sale } from "./Sale";
-import { SaleItemReturn } from "./SaleItemReturn";
+import { SaleOrder } from "./order/SaleOrder";
 
 export enum USER_ROLE {
   ADMIN = "admin",
@@ -49,9 +46,6 @@ export class User {
   image: string;
 
   @Column({ nullable: true })
-  image_public_id: string;
-
-  @Column({ nullable: true })
   phone: string;
 
   @Column({ type: "enum", enum: USER_ROLE, default: USER_ROLE.USER })
@@ -86,21 +80,6 @@ export class User {
   @OneToMany(() => Sale, (sale) => sale.saleAgent)
   sales: Sale[];
 
-  @OneToMany(() => Purchase, (purchase) => purchase.purchaseAgent)
-  purchases: Purchase[];
-
-  @OneToMany(
-    () => PurchaseOrder,
-    (purchaseOrder) => purchaseOrder.purchaseAgent
-  )
-  purchaseOrders: PurchaseOrder[];
-
   @OneToMany(() => SaleOrder, (saleOrder) => saleOrder.saleAgent)
   saleOrders: SaleOrder[];
-
-  @OneToMany(
-    () => SaleItemReturn,
-    (saleItemReturn) => saleItemReturn.requestedBy
-  )
-  returnedSaleOrders: SaleItemReturn[];
 }

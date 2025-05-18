@@ -40,15 +40,3 @@ export const userUpdateSchema = Joi.object<
   phone: Joi.string(),
   role: Joi.string().valid(...Object.values(USER_ROLE)),
 });
-
-export const userChangeStatusSchema = Joi.object<{ active: boolean }>({
-  active: Joi.boolean().required(),
-});
-
-export const userChangeRoleSchema = Joi.object<{
-  role: USER_ROLE;
-}>({
-  role: Joi.string()
-    .required()
-    .valid(...Object.values(USER_ROLE)),
-});

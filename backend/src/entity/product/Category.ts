@@ -20,9 +20,6 @@ export class Category {
   @Column({ nullable: true })
   image: string;
 
-  @Column({ nullable: true })
-  image_public_id: string;
-
   @CreateDateColumn({
     type: "timestamptz",
     precision: 3,
@@ -36,7 +33,7 @@ export class Category {
     default: () => "CURRENT_TIMESTAMP",
   })
   updatedAt: Date;
-
+  
   @DeleteDateColumn({
     nullable: true,
     type: "timestamptz",

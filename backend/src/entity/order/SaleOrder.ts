@@ -11,7 +11,7 @@ import {
 import { User } from "../User";
 import { SaleOrderItem } from "./SaleOrderItem";
 
-export enum SALE_ORDER_STATUS {
+export enum ORDER_STATUS {
   PENDING = "pending",
   RETURNED = "returned",
   COMPLETED = "completed",
@@ -22,12 +22,8 @@ export class SaleOrder {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({
-    type: "enum",
-    enum: SALE_ORDER_STATUS,
-    default: SALE_ORDER_STATUS.PENDING,
-  })
-  status: SALE_ORDER_STATUS;
+  @Column({ type: "enum", enum: ORDER_STATUS, default: ORDER_STATUS.PENDING })
+  status: ORDER_STATUS;
 
   @CreateDateColumn({
     type: "timestamptz",

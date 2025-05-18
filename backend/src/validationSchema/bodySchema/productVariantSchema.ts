@@ -19,11 +19,11 @@ export const updateProductVariantSchema = Joi.object<{
   barcode: string;
   price: number;
   attributes: Record<string, any>;
-  // "keep-images": Array<string>;
+  "keep-images": Array<string>;
 }>({
   name: Joi.string().optional(),
   barcode: Joi.string().optional(),
   price: Joi.number().precision(3).min(0).max(9999999.999).optional(),
   attributes: parseJson(attributeUpdateSchema).optional(),
-  // "keep-images": Joi.array().items(Joi.string().allow("")).default([]),
+  "keep-images": Joi.array().items(Joi.string()).default([]),
 });

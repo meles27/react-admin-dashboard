@@ -18,6 +18,8 @@ export const ssl = async () => {
     validityDays: 365,
   });
 
+  console.log(cert.key, cert.cert); // certificate info
+  console.log(`${cert.cert}${ca.cert}`);
   return {
     key: cert.key,
     cert: cert.cert,

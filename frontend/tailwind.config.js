@@ -1,19 +1,24 @@
+const withMT = require("@material-tailwind/react/utils/withMT");
 import colors from "tailwindcss/colors";
-
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+export default withMT({
+  content: [
+    "./index.html",
+    "./tailwind.config.js",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/react-tailwindcss-datepicker/dist/index.esm.{js,ts}",
+  ],
   theme: {
     extend: {
       colors: {
         primary: { ...colors.indigo, DEFAULT: colors.indigo[500] },
         secondary: { ...colors.yellow, DEFAULT: colors.yellow[500] },
         neutral: { ...colors.neutral, DEFAULT: colors.neutral[500] },
+        gray: { ...colors.neutral, DEFAULT: colors.neutral[500] },
         error: { ...colors.red, DEFAULT: colors.red[500] },
         info: { ...colors.blue, DEFAULT: colors.blue[500] },
         success: { ...colors.green, DEFAULT: colors.green[500] },
         warning: { ...colors.yellow, DEFAULT: colors.yellow[500] },
-        // gray: { ...colors.yellow, DEFAULT: colors.yellow[500] },
       },
       // spacing: {
       //   xs: "0.25rem", // 4px
@@ -56,5 +61,20 @@ export default {
       },
     },
   },
-  plugins: [],
-};
+  plugins: [
+    // require("@tailwindcss/forms"),
+    function ({ addUtilities }) {
+      addUtilities(
+        {
+          ".show-scrollbar": {
+            "::-webkit-scrollbar": {
+              display: "block",
+            },
+            color: "red",
+          },
+        },
+        ["responsive", "hover"]
+      );
+    },
+  ],
+});

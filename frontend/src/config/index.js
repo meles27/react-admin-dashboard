@@ -12,11 +12,35 @@ const PATHS = {
   ACTIVATE_USER_URL: "/api/v1/users/${userId}/activate",
   CHANGE_USER_STATUS_URL: "/api/v1/users/${userId}/change-status",
   CHANGE_USER_ROLE_URL: "/api/v1/users/${userId}/change-role",
+  // categories routes
+  CATEGORIES_URL: "/api/v1/categories",
+  CATEGORIE_URL: "/api/v1/categories/${categoryId}",
   // products route
   PRODUCTS_URL: "/api/v1/products",
   PRODUCT_URL: "/api/v1/products/${productId}",
+  PRODUCT_PRODUCTVARIANTS_URL: "/api/v1/products/${productId}/product-variants",
+  PRODUCT_PRODUCTVARIANT_URL:
+    "/api/v1/products/${productId}/product-variants/${productVariantId}",
+  PRODUCTVARIANTS_URL: "/api/v1/product-variants",
+  PRODUCTVARIANT_URL: "/api/v1/product-variants/${productVariantId}",
   // static files route
   IMAGES_URL: base + "${path}",
+  // sales routes
+  SALES_URL: "/api/v1/sales",
+  SALE_URL: "/api/v1/sales/${saleId}",
+  SALE_CALCULATE_URL: "/api/v1/sales/${saleId}/calculate",
+  SALE_PRODUCTS_URL: "/api/v1/sales/${saleId}/sale-items",
+  SALE_PRODUCT_URL: "/api/v1/sales/${saleId}/sale-items/${saleProductId}",
+  SALE_ITEM_RETURNS_URL: "/api/v1/sale-returns",
+  SALE_ITEM_RETURN_URL: "/api/v1/sale-returns/${saleItemReturnId}",
+  CONFIRM_SALE_ITEM_RETURN_URL:
+    "/api/v1/sale-returns/${saleItemReturnId}/confirm-return",
+  // purchases route
+  PURCHASES_URL: "/api/v1/purchases",
+  PURCHASE_URL: "/api/v1/purchases/${purchaseId}",
+  PURCHASEPRODUCTS_URL: "/api/v1/purchases/${purchaseId}/purchase-items",
+  PURCHASEPRODUCT_URL:
+    "/api/v1/purchases/${purchaseId}/purchase-items/${purchaseProductId}",
   // inventory routes
   INVENTORIES_URL: "/api/v1/inventories",
   INVENTORY_URL: "/api/v1/inventories/${inventoryId}",
@@ -28,6 +52,17 @@ const PATHS = {
   SALE_ORDER_ITEMS_URL: "/api/v1/sale-orders/${saleOrderId}/order-items",
   SALE_ORDER_ITEM_URL:
     "/api/v1/sale-orders/${saleOrderId}/order-items/${saleOrderItemId}",
+  //purchase order routes
+  PURCHASE_ORDERS_URL: "/api/v1/purchase-orders",
+  PURCHASE_ORDER_URL: "/api/v1/purchase-orders/${purchaseOrderId}",
+  COMPLETE_PURCHASE_ORDER_URL:
+    "/api/v1/purchase-orders/${purchaseOrderId}/complete-order",
+  CALCULATE_PURCHASE_ORDER_URL:
+    "/api/v1/purchase-orders/${purchaseOrderId}/calculate",
+  PURCHASE_ORDER_ITEMS_URL:
+    "/api/v1/purchase-orders/${purchaseOrderId}/order-items",
+  PURCHASE_ORDER_ITEM_URL:
+    "/api/v1/purchase-orders/${purchaseOrderId}/order-items/${purchaseOrderItemId}",
 
   // analysis and report routes
   GENERAL_ANALYSIS: "/api/v1/analysis/general",
@@ -65,6 +100,11 @@ const config = {
   SEARCH_INPUT_DELAY: 400,
   STATUS_CODE_GROUP_VALIDATION: [409, 400],
   STATUS_CODE_GROUP_GENERAL: [401, 402, 403, 404, 500],
+  USER_ROLE: {
+    admin: "admin",
+    staff: "staff",
+    cashier: "cashier",
+  },
 };
 
 export default config;

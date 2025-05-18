@@ -1,5 +1,4 @@
 import { User } from "@/entity/User";
-import { CloudinaryImageHandler } from "@/utils/imageHandler";
 import "express";
 
 declare global {
@@ -10,7 +9,6 @@ declare global {
         access: string;
         refresh: string;
       };
-      cloudinary: CloudinaryImageHandler;
     }
   }
 }
