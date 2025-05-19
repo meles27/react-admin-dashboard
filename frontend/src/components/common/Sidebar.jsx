@@ -1,3 +1,4 @@
+import { Button } from "@material-tailwind/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart2,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import LogoutDialog from "../shared/LogoutDialog";
 
 const SIDEBAR_ITEMS = [
   {
@@ -20,12 +22,12 @@ const SIDEBAR_ITEMS = [
   { name: "Products", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
   { name: "Users", icon: Users, color: "#EC4899", href: "/users" },
   { name: "Sales", icon: DollarSign, color: "#10B981", href: "/sales" },
-  // { name: "Orders", icon: ShoppingCart, color: "#F59E0B", href: "/orders" },
   { name: "Profile", icon: Settings, color: "#6EE7B7", href: "/profile" },
 ];
 
 const Sidebar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [logout, setLogout] = useState(false);
 
   return (
     <motion.div
@@ -68,8 +70,19 @@ const Sidebar = () => {
               </motion.div>
             </Link>
           ))}
+          <Button
+            fullWidth
+            className="bg-error text-white mt-auto"
+            onClick={() => setLogout(true)}
+          >
+            Logout
+          </Button>
         </nav>
       </div>
+      <LogoutDialog
+        open={logout}
+        handler={() => setLogout((state) => !state)}
+      />
     </motion.div>
   );
 };

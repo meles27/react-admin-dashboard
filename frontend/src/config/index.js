@@ -89,7 +89,7 @@ const config = {
     USER_LOGIN_REDIRECT: "/",
     ADMIN_LOGIN_REDIRECT: "/dashboard",
     STUFF_LOGIN_REDIRECT: "/scan",
-    LOGOUT_REDIRECT: "/signin",
+    LOGOUT_REDIRECT: "/auth/login",
   },
   PAGE_SIZE: 40,
   SEARCH_PAGINATION_LIMIT: 1000,

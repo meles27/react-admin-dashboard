@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import Sidebar from "./components/common/Sidebar";
 
 import { ToastContainer } from "react-toastify";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
 import config from "./config";
 import { useJwtTokenRefresh } from "./hooks/useJwtTokenRefresh";
 import LoginPage from "./pages/LoginPage";
@@ -25,11 +26,46 @@ const App = () => {
       {location.pathname !== "/auth/login" && <Sidebar />}
 
       <Routes>
-        <Route path="/" element={<OverviewPage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/sales" element={<SalesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute roles={["admin", "staff"]}>
+              <OverviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute roles={["admin", "staff"]}>
+              <ProductsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute roles={["admin", "staff"]}>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sales"
+          element={
+            <ProtectedRoute roles={["admin", "staff"]}>
+              <SalesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute roles={["admin", "staff"]}>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/auth/login" element={<LoginPage />} />
       </Routes>
 
