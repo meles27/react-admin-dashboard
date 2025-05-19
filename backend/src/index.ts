@@ -134,7 +134,7 @@ AppDataSource.initialize()
      */
     httpsServer.listen(Settings.PORT, Settings.HOST, () => {
       console.log(
-        `server is running on port 3000, visit on http://${Settings.HOST}:3000`
+        `server is running on port 3000, visit on http://${Settings.HOST}:${Settings.PORT}`
       );
     });
   })
